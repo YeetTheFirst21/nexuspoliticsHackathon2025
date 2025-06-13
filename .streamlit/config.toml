@@ -1,0 +1,15 @@
+#[client]
+#showSidebarNavigation = false
+
+[theme]
+base="light"
+
+[browser]
+gatherUsageStats = false
+
+[server]
+headless = true
+
+#[page]
+# Force the app to use the wide screen layout
+#layout="wide"
