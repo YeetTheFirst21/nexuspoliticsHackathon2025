@@ -1,11 +1,52 @@
 import streamlit as st
 import pydeck
+import geopandas as gpd
 import pandas as pd
 from streamlit.components.v1 import html
+import os
 
+# Add cached data loading for shapefiles
+@st.cache_data
+def load_shapefiles():
+    bund = gpd.read_file("./data/vg5000_ebenen_1231/VG5000_LAN.shp").to_crs(epsg=4326)
+    land = gpd.read_file("./data/vg5000_ebenen_1231/VG5000_KRS.shp").to_crs(epsg=4326)
+    gemeinde = gpd.read_file("./data/vg5000_ebenen_1231/VG5000_GEM.shp").to_crs(epsg=4326)
+    return bund, land, gemeinde
+
+# Load administrative boundaries
+bund, land, gemeinde = load_shapefiles()
+
+# Create dynamic layers
+admin_layers = {
+    "bundeslaender": pydeck.Layer(
+        "GeoJsonLayer",
+        data=bund,
+        id="bundeslaender",
+        get_fill_color=[0, 0, 255, 80],
+        pickable=True,
+        visible=False
+    ),
+    "landkreise": pydeck.Layer(
+        "GeoJsonLayer",
+        data=land,
+        id="landkreise",
+        get_fill_color=[0, 255, 0, 80],
+        pickable=True,
+        visible=False
+    ),
+    "gemeinde": pydeck.Layer(
+        "GeoJsonLayer",
+        data=gemeinde,
+        id="gemeinde",
+        get_fill_color=[255, 0, 0, 80],
+        pickable=True,
+        visible=False
+    )
+}
 
 
 def main():
+
     if "done_init" not in st.session_state:
         st.session_state["done_init"] = True
         st.set_page_config(
@@ -58,8 +99,6 @@ def main():
     #st.write(cities)
 
 
-
-
     point_layer2 = pydeck.Layer(
         "ScatterplotLayer",
         data=cities,
@@ -76,17 +115,40 @@ def main():
         latitude=48.1351, longitude=11.5820, zoom=6.5, min_zoom=5, max_zoom=15
     )
 
-
+    # Modify your existing Deck configuration
     chart2 = pydeck.Deck(
-        point_layer2,
+        layers=[point_layer2] + list(admin_layers.values()),
         initial_view_state=view_state,
-        # this is what is shown on hover when you hover over a point on the map
         tooltip={"text": "{Capital}\n{Latitude}, {Longitude}"},
     )
+    st.write(chart2.layers)
+    # Get map return data to track zoom
+    map_return = st.pydeck_chart(
+        chart2,
+        on_select="rerun",
+        selection_mode="multi-object",
+        height=800,
+        key="main_map"
+    )
+
+    # Dynamic layer visibility based on zoom
+    if map_return and "viewState" in map_return:
+        current_zoom = map_return["viewState"]["zoom"]
+        
+        # Update layer visibility
+        admin_layers["bundeslaender"].visible = current_zoom < 8
+        admin_layers["landkreise"].visible = 8 <= current_zoom < 12
+        admin_layers["gemeinde"].visible = current_zoom >= 12
+
+        # Rebuild the deck with updated layers
+        chart2.layers = [point_layer2] + list(admin_layers.values())
+
 
 
     # this is the map itself
     mainMap = st.pydeck_chart(chart2, on_select="rerun", selection_mode="multi-object",height=800)
+
+
 
     try:
         selectedCities = mainMap.selection["objects"]["cities"]
