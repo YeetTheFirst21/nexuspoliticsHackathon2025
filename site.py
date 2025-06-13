@@ -5,6 +5,25 @@ import pandas as pd
 from streamlit.components.v1 import html
 import os
 
+if "done_init" not in st.session_state:
+    st.session_state["done_init"] = True
+    st.set_page_config(
+        # collapses the pages sidebar if there are any pages in pages dir.
+        initial_sidebar_state="collapsed",
+        layout="wide"
+    )
+    # this removes the deploy and run crap on the top right of screen
+    st.markdown(
+        """
+    <style>
+        .st-emotion-cache-yfhhig.ef3psqc5 {
+            display: none;
+        }
+    </style>
+    """,
+        unsafe_allow_html=True,
+    )
+
 # Add cached data loading for shapefiles
 @st.cache_data
 def load_shapefiles():
@@ -62,24 +81,7 @@ cities["size"] = 5000
 
 def main():
 
-    if "done_init" not in st.session_state:
-        st.session_state["done_init"] = True
-        # st.set_page_config(
-        #     # collapses the pages sidebar if there are any pages in pages dir.
-        #     initial_sidebar_state="collapsed",
-        #     layout="wide"
-        # )
-        # this removes the deploy and run crap on the top right of screen
-        st.markdown(
-            """
-        <style>
-            .st-emotion-cache-yfhhig.ef3psqc5 {
-                display: none;
-            }
-        </style>
-        """,
-            unsafe_allow_html=True,
-        )
+
 
     st.markdown("<h1 style='text-align: center;'>Politics Heatmap of Germany @ nexus Politics Hackathon 2025</h1>", unsafe_allow_html=True)
 
