@@ -1,5 +1,5 @@
 import streamlit as st
-from folium_map import load_boundaries, load_issues, create_map
+from folium_map import load_boundaries, create_map
 from streamlit_folium import st_folium
 
 
