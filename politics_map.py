@@ -36,6 +36,8 @@ class PoliticsMap:
                 data=self.bund,
                 id="bundeslaender",
                 get_fill_color=[0, 0, 255, 80],
+                get_line_color=[0, 0, 0],
+                get_line_width=1,
                 pickable=pickable,
                 auto_highlight=True,
                 visible=self.zoom == 1
@@ -45,6 +47,8 @@ class PoliticsMap:
                 data=self.kreis,
                 id="landkreise",
                 get_fill_color=[0, 255, 0, 80],
+                get_line_color=[255,255,255],
+                get_line_width=100,
                 pickable=pickable,
                 auto_highlight=True,
                 visible=self.zoom == 2
@@ -54,6 +58,8 @@ class PoliticsMap:
                 data=self.gemeinde,
                 id="gemeinde",
                 get_fill_color=[255, 0, 0, 80],
+                get_line_color=[0, 0, 0],
+                get_line_width=1,
                 pickable=pickable,
                 auto_highlight=True,
                 visible=self.zoom == 3
@@ -74,7 +80,7 @@ class PoliticsMap:
     
     def get_deck(self):
         self.deck = pydeck.Deck(
-            [self.get_admin_regions_layer(), self.get_points_layer()],
+            self.get_admin_regions_layer() + [self.get_points_layer()],
             initial_view_state=self.view_state,
             tooltip={"text": "{category}\n{date}\n{GEN}"}
         )
