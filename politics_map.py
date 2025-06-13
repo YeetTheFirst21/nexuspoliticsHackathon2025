@@ -3,6 +3,12 @@ import geopandas as gpd
 import pandas as pd
 import streamlit as st
 
+def get_centroid(geodf, region_name):
+    row = geodf[geodf['GEN'] == region_name]
+    if not row.empty:
+        return row.iloc[0].geometry.centroid.y, row.iloc[0].geometry.centroid.x
+    return 51.1634, 10.4477
+
 class PoliticsMap:
     def __init__(self, zoom, districts_data):
         self.zoom = zoom
@@ -27,7 +33,6 @@ class PoliticsMap:
         gemeinde_gdf["geometry"] = gemeinde_gdf["geometry"].simplify(0.001)
         gemeinde = gemeinde_gdf.to_crs(epsg=4326)
         return bund, kreis, gemeinde
-
     def get_admin_regions_layer(self):
         pickable = False
         return [
