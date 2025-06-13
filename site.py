@@ -24,8 +24,9 @@ if "done_init" not in st.session_state:
         unsafe_allow_html=True,
     )
 # Issues DATA
-issues_with_districts = pd.read_csv('./data/challenge_2/issues_with_districts.csv')
-districts_data = issues_with_districts[['category', 'latitude', 'longitude']].drop_duplicates()
+issues_with_districts = pd.read_csv('./data/challenge_2/issues_with_districts.csv',
+                                    usecols=['category', 'latitude', 'longitude', 'description'])
+districts_data = issues_with_districts[['category', 'latitude', 'longitude', 'description', ]].drop_duplicates()
 
 districts_data["size"] = 5000
 
