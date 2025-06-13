@@ -26,9 +26,9 @@ def load_boundaries():
 
     return bund, kreis, gemeinde
 
-def create_map(bund, kreis, gemeinde, issues):
-    # Use a dark tile layer
-    m = folium.Map(location=[51.0, 10.0], zoom_start=6, tiles="OpenStreetMap")
+def create_map(bund, kreis, gemeinde, issues, lat=51.0, lon=10.0, zoom=6):
+    m = folium.Map(location=[lat, lon], zoom_start=zoom, tiles="OpenStreetMap")
+
 
     # Add GeoJson layers with higher-contrast colors for dark background
     gj_bund = folium.GeoJson(
