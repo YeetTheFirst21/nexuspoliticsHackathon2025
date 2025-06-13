@@ -31,7 +31,10 @@ def main():
     if "map_data" not in st.session_state:
         with st.spinner("Loading map data..."):
             bund, kreis, gemeinde = load_boundaries()
-            issues = load_issues()
+            issues = pd.read_csv(
+                './data/challenge_2/issues_with_districts.csv',
+                usecols=['category', 'latitude', 'longitude', 'description']
+            ).drop_duplicates()
             st.session_state["map_data"] = {
                 "map": create_map(bund, kreis, gemeinde, issues)
             }
