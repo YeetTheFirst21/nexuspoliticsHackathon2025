@@ -1,8 +1,7 @@
-import streamlit as st
-import pydeck
 import geopandas as gpd
 import pandas as pd
-from streamlit.components.v1 import html
+import pydeck
+import streamlit as st
 import os
 from politics_map import PoliticsMap
 
@@ -24,10 +23,10 @@ if "done_init" not in st.session_state:
     """,
         unsafe_allow_html=True,
     )
-
 # Issues DATA
 issues_with_districts = pd.read_csv('./data/challenge_2/issues_with_districts.csv')
 districts_data = issues_with_districts[['category', 'latitude', 'longitude']].drop_duplicates()
+
 districts_data["size"] = 5000
 
 def main():
@@ -54,7 +53,6 @@ def main():
         height=800,
         key="main_map"
     )
-
     # this removes openstreetmap logo at the bottom right of the map
     st.markdown('<style>.mapboxgl-ctrl-bottom-right{display: none;}</style>', unsafe_allow_html=True)
 
