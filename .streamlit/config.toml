@@ -10,6 +10,6 @@ gatherUsageStats = false
 [server]
 headless = true
 
-#[page]
-# Force the app to use the wide screen layout
-#layout="wide"
+[page]
+ Force the app to use the wide screen layout
+layout="wide"
