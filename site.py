@@ -16,44 +16,59 @@ def load_shapefiles():
 # Load administrative boundaries
 bund, land, gemeinde = load_shapefiles()
 
-# Create dynamic layers
-admin_layers = {
-    "bundeslaender": pydeck.Layer(
-        "GeoJsonLayer",
-        data=bund,
-        id="bundeslaender",
-        get_fill_color=[0, 0, 255, 80],
-        pickable=True,
-        visible=False
-    ),
-    "landkreise": pydeck.Layer(
-        "GeoJsonLayer",
-        data=land,
-        id="landkreise",
-        get_fill_color=[0, 255, 0, 80],
-        pickable=True,
-        visible=False
-    ),
-    "gemeinde": pydeck.Layer(
-        "GeoJsonLayer",
-        data=gemeinde,
-        id="gemeinde",
-        get_fill_color=[255, 0, 0, 80],
-        pickable=True,
-        visible=False
-    )
-}
+# Get layer dynamically
+def get_admin_layers(current_zoom):
+    return [
+        pydeck.Layer(
+            "GeoJsonLayer",
+            data=bund,
+            id="bundeslaender",
+            get_fill_color=[0, 0, 255, 80],
+            pickable=True,
+            visible=current_zoom < 8
+        ),
+        pydeck.Layer(
+            "GeoJsonLayer",
+            data=land,
+            id="landkreise",
+            get_fill_color=[0, 255, 0, 80],
+            pickable=True,
+            visible=8 <= current_zoom < 12
+        ),
+        pydeck.Layer(
+            "GeoJsonLayer",
+            data=gemeinde,
+            id="gemeinde",
+            get_fill_color=[255, 0, 0, 80],
+            pickable=True,
+            visible=current_zoom >= 12
+        )
+    ]
 
+
+cities = {
+        "Garching bei München": {"latitude": 48.2496, "longitude": 11.6584},
+        "Würzburg": {"latitude": 49.7913, "longitude": 9.9534},
+        "Heilbronn": {"latitude": 49.1427, "longitude": 9.2109},
+        "München": {"latitude": 48.1351, "longitude": 11.5820}
+    }
+#reformatting cities to be in the same format as capitals with their latitude and longitude
+cities = pd.DataFrame(cities.items(), columns=["Capital", "coordinates"])
+cities[["Latitude", "Longitude"]] = pd.DataFrame(cities["coordinates"].tolist(), index=cities.index)
+#adding a size column to the cities dataframe
+# size is the diameter of the circle that will be drawn on the map.
+cities["size"] = 5000
+#st.write(cities)
 
 def main():
 
     if "done_init" not in st.session_state:
         st.session_state["done_init"] = True
-        st.set_page_config(
-            # collapses the pages sidebar if there are any pages in pages dir.
-            initial_sidebar_state="collapsed",
-            layout="wide"
-        )
+        # st.set_page_config(
+        #     # collapses the pages sidebar if there are any pages in pages dir.
+        #     initial_sidebar_state="collapsed",
+        #     layout="wide"
+        # )
         # this removes the deploy and run crap on the top right of screen
         st.markdown(
             """
@@ -66,12 +81,6 @@ def main():
             unsafe_allow_html=True,
         )
 
-    cities = {
-        "Garching bei München": {"latitude": 48.2496, "longitude": 11.6584},
-        "Würzburg": {"latitude": 49.7913, "longitude": 9.9534},
-        "Heilbronn": {"latitude": 49.1427, "longitude": 9.2109},
-        "München": {"latitude": 48.1351, "longitude": 11.5820}
-    }
     st.markdown("<h1 style='text-align: center;'>Politics Heatmap of Germany @ nexus Politics Hackathon 2025</h1>", unsafe_allow_html=True)
 
     # removes streamlit ads...
@@ -90,15 +99,20 @@ def main():
 
 
 
-    #reformatting cities to be in the same format as capitals with their latitude and longitude
-    cities = pd.DataFrame(cities.items(), columns=["Capital", "coordinates"])
-    cities[["Latitude", "Longitude"]] = pd.DataFrame(cities["coordinates"].tolist(), index=cities.index)
-    #adding a size column to the cities dataframe
-    # size is the diameter of the circle that will be drawn on the map.
-    cities["size"] = 5000
-    #st.write(cities)
 
+    view_state = pydeck.ViewState(
+        latitude=48.1351, longitude=11.5820, zoom=6.5, min_zoom=5, max_zoom=15
+    )
 
+    # Initial zoom
+    current_zoom = view_state.zoom
+
+    # Get map return data to track zoom
+    chart2 = None
+    map_return = None
+
+    # Build layers based on zoom
+    admin_layers = get_admin_layers(current_zoom)
     point_layer2 = pydeck.Layer(
         "ScatterplotLayer",
         data=cities,
@@ -109,20 +123,12 @@ def main():
         auto_highlight=True,
         get_radius="size",
     )
-
-    view_state = pydeck.ViewState(
-        # the default zoom on the map.
-        latitude=48.1351, longitude=11.5820, zoom=6.5, min_zoom=5, max_zoom=15
-    )
-
-    # Modify your existing Deck configuration
     chart2 = pydeck.Deck(
-        layers=[point_layer2] + list(admin_layers.values()),
+        layers=[point_layer2] + admin_layers,
         initial_view_state=view_state,
         tooltip={"text": "{Capital}\n{Latitude}, {Longitude}"},
     )
-    st.write(chart2.layers)
-    # Get map return data to track zoom
+
     map_return = st.pydeck_chart(
         chart2,
         on_select="rerun",
@@ -131,29 +137,31 @@ def main():
         key="main_map"
     )
 
-    # Dynamic layer visibility based on zoom
+    # If zoom changed, rebuild layers
     if map_return and "viewState" in map_return:
         current_zoom = map_return["viewState"]["zoom"]
-        
-        # Update layer visibility
-        admin_layers["bundeslaender"].visible = current_zoom < 8
-        admin_layers["landkreise"].visible = 8 <= current_zoom < 12
-        admin_layers["gemeinde"].visible = current_zoom >= 12
-
-        # Rebuild the deck with updated layers
-        chart2.layers = [point_layer2] + list(admin_layers.values())
-
-
-
-    # this is the map itself
+        admin_layers = get_admin_layers(current_zoom)
+        chart2 = pydeck.Deck(
+            layers=[point_layer2] + admin_layers,
+            initial_view_state=view_state,
+            tooltip={"text": "{Capital}\n{Latitude}, {Longitude}"},
+        )
+        st.pydeck_chart(
+            chart2,
+            on_select="rerun",
+            selection_mode="multi-object",
+            height=800,
+            key="main_map"
+        )
+    
     mainMap = st.pydeck_chart(chart2, on_select="rerun", selection_mode="multi-object",height=800)
-
-
 
     try:
         selectedCities = mainMap.selection["objects"]["cities"]
     except :
         selectedCities = []
+
+
 
     #st.write(selectedCities)
 
