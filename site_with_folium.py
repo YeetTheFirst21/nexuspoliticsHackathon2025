@@ -75,55 +75,55 @@ def main():
         
 
     #st.markdown('<style>.leaflet-bottom.leaflet-right{display: none;}</style>', unsafe_allow_html=True)
-with bottom():
-    st.markdown("## Filters")
-    col1, col2 = st.columns(2)
 
-    with col1:
-        # Time resolution selector (functionality not active here unless you process the corresponding CSVs)
-        time_resolution = st.selectbox("Time Resolution", ["Raw issues", "Daily", "Weekly", "Monthly"])
-        # Optional: load other resolution CSVs here
+st.markdown("## Filters")
+col1, col2 = st.columns(2)
 
-        # Location filters
-        location_level = st.selectbox("Location Level", ["All Germany", "State", "District", "Municipality"])
-        geo_value = None
-        if location_level == "State":
-            geo_value = st.selectbox("Select State", sorted(filtered_data["state"].dropna().unique()))
-            filtered_data = filtered_data[filtered_data["state"] == geo_value]
-            lat, lon = get_centroid(bund, geo_value)
-            zoom = 8
-        elif location_level == "District":
-            geo_value = st.selectbox("Select District", sorted(filtered_data["district"].dropna().unique()))
-            filtered_data = filtered_data[filtered_data["district"] == geo_value]
-            lat, lon = get_centroid(kreis, geo_value)
-            zoom = 10
-        elif location_level == "Municipality":
-            geo_value = st.selectbox("Select Municipality", sorted(filtered_data["municipality"].dropna().unique()))
-            filtered_data = filtered_data[filtered_data["municipality"] == geo_value]
-            lat, lon = get_centroid(gemeinde, geo_value)
-            zoom = 12
+with col1:
+    # Time resolution selector (functionality not active here unless you process the corresponding CSVs)
+    time_resolution = st.selectbox("Time Resolution", ["Raw issues", "Daily", "Weekly", "Monthly"])
+    # Optional: load other resolution CSVs here
+
+    # Location filters
+    location_level = st.selectbox("Location Level", ["All Germany", "State", "District", "Municipality"])
+    geo_value = None
+    if location_level == "State":
+        geo_value = st.selectbox("Select State", sorted(filtered_data["state"].dropna().unique()))
+        filtered_data = filtered_data[filtered_data["state"] == geo_value]
+        lat, lon = get_centroid(bund, geo_value)
+        zoom = 8
+    elif location_level == "District":
+        geo_value = st.selectbox("Select District", sorted(filtered_data["district"].dropna().unique()))
+        filtered_data = filtered_data[filtered_data["district"] == geo_value]
+        lat, lon = get_centroid(kreis, geo_value)
+        zoom = 10
+    elif location_level == "Municipality":
+        geo_value = st.selectbox("Select Municipality", sorted(filtered_data["municipality"].dropna().unique()))
+        filtered_data = filtered_data[filtered_data["municipality"] == geo_value]
+        lat, lon = get_centroid(gemeinde, geo_value)
+        zoom = 12
 
 
-        # Origin filter
-        origin = st.selectbox("Origin", ["All"] + sorted(filtered_data["origin"].dropna().unique()))
-        if origin != "All":
-            filtered_data = filtered_data[filtered_data["origin"] == origin]
+    # Origin filter
+    origin = st.selectbox("Origin", ["All"] + sorted(filtered_data["origin"].dropna().unique()))
+    if origin != "All":
+        filtered_data = filtered_data[filtered_data["origin"] == origin]
 
-    with col2:
-        # Category filter
-        categories = sorted(filtered_data["category"].dropna().unique())
-        selected_categories = st.pills("Select category", options=categories, default=categories, selection_mode="multi")
-        filtered_data = filtered_data[filtered_data["category"].isin(selected_categories)]
+with col2:
+    # Category filter
+    categories = sorted(filtered_data["category"].dropna().unique())
+    selected_categories = st.pills("Select category", options=categories, default=categories, selection_mode="multi")
+    filtered_data = filtered_data[filtered_data["category"].isin(selected_categories)]
 
-        # Age and gender
-        age = st.selectbox("Age Group", ["All"] + sorted(filtered_data["age_group"].dropna().unique()))
-        gender = st.selectbox("Gender", ["All"] + sorted(filtered_data["gender"].dropna().unique()))
+    # Age and gender
+    age = st.selectbox("Age Group", ["All"] + sorted(filtered_data["age_group"].dropna().unique()))
+    gender = st.selectbox("Gender", ["All"] + sorted(filtered_data["gender"].dropna().unique()))
 
-        if age != "All":
-            filtered_data = filtered_data[filtered_data["age_group"] == age]
-        if gender != "All":
-            filtered_data = filtered_data[filtered_data["gender"] == gender]
+    if age != "All":
+        filtered_data = filtered_data[filtered_data["age_group"] == age]
+    if gender != "All":
+        filtered_data = filtered_data[filtered_data["gender"] == gender]
 
-    st.success(f"{len(filtered_data)} issues shown on map.")
+st.success(f"{len(filtered_data)} issues shown on map.")
 if __name__ == "__main__":
     main()
