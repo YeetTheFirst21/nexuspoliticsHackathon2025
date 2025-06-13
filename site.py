@@ -1,8 +1,7 @@
-import streamlit as st
-import pydeck
 import geopandas as gpd
 import pandas as pd
-from streamlit.components.v1 import html
+import pydeck
+import streamlit as st
 import os
 
 if "done_init" not in st.session_state:
@@ -27,22 +26,37 @@ if "done_init" not in st.session_state:
 # Add cached data loading for shapefiles
 @st.cache_data
 def load_shapefiles():
-    bund_gdf = gpd.read_file("./data/vg5000_ebenen_1231/VG5000_LAN.shp")
-    bund_gdf["geometry"] = bund_gdf["geometry"].simplify(0.001)
-    bund = bund_gdf.to_crs(epsg=4326)
+    # Bundesland
+    if not os.path.exists("./data/vg5000_ebenen_1231/VG5000_LAN_simple.gpkg"):
+        print("new Bundesland map needed")
+        bund_gdf = gpd.read_file("./data/vg5000_ebenen_1231/VG5000_LAN.shp", usecols=["geometry"])
+        bund_gdf["geometry"] = bund_gdf["geometry"].simplify(0.01)  # higher tolerance
+        bund_gdf.to_file("./data/vg5000_ebenen_1231/VG5000_LAN_simple.gpkg", driver="GPKG")
+    bund = gpd.read_file("./data/vg5000_ebenen_1231/VG5000_LAN_simple.gpkg").to_crs(epsg=4326)
 
-    kreis_gdf = gpd.read_file("./data/vg5000_ebenen_1231/VG5000_KRS.shp")
-    kreis_gdf["geometry"] = kreis_gdf["geometry"].simplify(0.001)
-    kreis = kreis_gdf.to_crs(epsg=4326)
-    
-    gemeinde_gdf = gpd.read_file("./data/vg5000_ebenen_1231/VG5000_GEM.shp")
-    gemeinde_gdf["geometry"] = gemeinde_gdf["geometry"].simplify(0.001)
-    gemeinde = gemeinde_gdf.to_crs(epsg=4326)
+    # Kreis
+    if not os.path.exists("./data/vg5000_ebenen_1231/VG5000_KRS_simple.gpkg"):
+        print("new kreis map needed")
+        kreis_gdf = gpd.read_file("./data/vg5000_ebenen_1231/VG5000_KRS.shp", usecols=["geometry"])
+        kreis_gdf["geometry"] = kreis_gdf["geometry"].simplify(0.01)
+        kreis_gdf.to_file("./data/vg5000_ebenen_1231/VG5000_KRS_simple.gpkg", driver="GPKG")
+    kreis = gpd.read_file("./data/vg5000_ebenen_1231/VG5000_KRS_simple.gpkg").to_crs(epsg=4326)
+
+    # Gemeinde
+    if not os.path.exists("./data/vg5000_ebenen_1231/VG5000_GEM_simple.gpkg"):
+        print("new gemeinde map needed")
+        gemeinde_gdf = gpd.read_file("./data/vg5000_ebenen_1231/VG5000_GEM.shp", usecols=["geometry"])
+        gemeinde_gdf["geometry"] = gemeinde_gdf["geometry"].simplify(0.01)
+        gemeinde_gdf.to_file("./data/vg5000_ebenen_1231/VG5000_GEM_simple.gpkg", driver="GPKG")
+    gemeinde = gpd.read_file("./data/vg5000_ebenen_1231/VG5000_GEM_simple.gpkg").to_crs(epsg=4326)
+
     return bund, kreis, gemeinde
 
+
 # Issues DATA
-issues_with_districts = pd.read_csv('./data/challenge_2/issues_with_districts.csv')
-districts_data = issues_with_districts[['category', 'latitude', 'longitude']].drop_duplicates()
+issues_with_districts = pd.read_csv('./data/challenge_2/issues_with_districts.csv',
+                                    usecols=['category', 'latitude', 'longitude', 'description'])
+districts_data = issues_with_districts[['category', 'latitude', 'longitude', 'description', ]].drop_duplicates()
 
 districts_data["size"] = 5000
 
@@ -104,8 +118,9 @@ def get_updated_deck(view_state, zoom_level):
     return pydeck.Deck(
                 update_layers(zoom_level),
                 initial_view_state = view_state,
-                tooltip={"text": "{GEN}"},
+                tooltip={"text": "{category}"},
             )
+
 
 def main():
 
@@ -136,14 +151,11 @@ def main():
         height=800,
         key="main_map"
     )
-    
-
 
     #st.write(selectedCities)
 
     # this removes openstreetmap logo at the bottom right of the map
     st.markdown('<style>.mapboxgl-ctrl-bottom-right{display: none;}</style>', unsafe_allow_html=True)
-
 
 
 if __name__ == "__main__":
