@@ -7,7 +7,7 @@ from streamlit_extras.bottom_container import bottom
 if "done_init" not in st.session_state:
     st.session_state["done_init"] = True
     st.set_page_config(initial_sidebar_state="collapsed", layout="wide")
-    st.markdown("<h1 style='text-align: center;'>Politics Heatmap of Germany @ nexus Politics Hackathon 2025</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center;'>Politics Heatmap of Germany @ Nexus Politics Hackathon 2025</h1>", unsafe_allow_html=True)
     st.markdown("""
         <style>
             .stMainBlockContainer { margin-top: -5em; }
