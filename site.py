@@ -24,7 +24,7 @@ def get_admin_layers(current_zoom):
             data=bund,
             id="bundeslaender",
             get_fill_color=[0, 0, 255, 80],
-            pickable=True,
+            pickable=False,
             visible=current_zoom < 8
         ),
         pydeck.Layer(
@@ -32,7 +32,7 @@ def get_admin_layers(current_zoom):
             data=land,
             id="landkreise",
             get_fill_color=[0, 255, 0, 80],
-            pickable=True,
+            pickable=False,
             visible=8 <= current_zoom < 12
         ),
         pydeck.Layer(
@@ -40,7 +40,7 @@ def get_admin_layers(current_zoom):
             data=gemeinde,
             id="gemeinde",
             get_fill_color=[255, 0, 0, 80],
-            pickable=True,
+            pickable=False,
             visible=current_zoom >= 12
         )
     ]
