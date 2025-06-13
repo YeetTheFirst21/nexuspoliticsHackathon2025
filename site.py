@@ -27,10 +27,18 @@ if "done_init" not in st.session_state:
 # Add cached data loading for shapefiles
 @st.cache_data
 def load_shapefiles():
-    bund = gpd.read_file("./data/vg5000_ebenen_1231/VG5000_LAN.shp").to_crs(epsg=4326)
-    land = gpd.read_file("./data/vg5000_ebenen_1231/VG5000_KRS.shp").to_crs(epsg=4326)
-    gemeinde = gpd.read_file("./data/vg5000_ebenen_1231/VG5000_GEM.shp").to_crs(epsg=4326)
-    return bund, land, gemeinde
+    bund_gdf = gpd.read_file("./data/vg5000_ebenen_1231/VG5000_LAN.shp")
+    bund_gdf["Geometry"] = bund_gdf["Geometry"].simplify(0.001)
+    bund = bund_gdf.to_crs(epsg=4326)
+
+    kreis_gdf = gpd.read_file("./data/vg5000_ebenen_1231/VG5000_KRS.shp")
+    kreis_gdf["Geometry"] = kreis_gdf["Geometry"].simplify(0.001)
+    kreis = kreis_gdf.to_crs(epsg=4326)
+    
+    gemeinde_gdf = gpd.read_file("./data/vg5000_ebenen_1231/VG5000_GEM.shp")
+    gemeinde_gdf["Geometry"] = gemeinde_gdf["Geometry"].simplify(0.001)
+    gemeinde = gemeinde_gdf.to_crs(epsg=4326)
+    return bund, kreis, gemeinde
 
 # Issues DATA
 issues_with_districts = pd.read_csv('./data/challenge_2/issues_with_districts.csv')
@@ -39,7 +47,7 @@ districts_data = issues_with_districts[['category', 'latitude', 'longitude']].dr
 districts_data["size"] = 5000
 
 # Load administrative boundaries
-bund, land, gemeinde = load_shapefiles()
+bund, kreis, gemeinde = load_shapefiles()
 
 # Get layer dynamically
 def get_admin_regions_layer(current_zoom):
@@ -55,7 +63,7 @@ def get_admin_regions_layer(current_zoom):
         ),
         pydeck.Layer(
             "GeoJsonLayer",
-            data=land,
+            data=kreis,
             id="landkreise",
             get_fill_color=[0, 255, 0, 80],
             pickable=True,
