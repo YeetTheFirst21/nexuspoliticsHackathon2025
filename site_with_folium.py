@@ -1,7 +1,7 @@
 import streamlit as st
 from folium_map import load_boundaries, create_map
 from streamlit_folium import st_folium
-
+import pandas as pd
 
 if "done_init" not in st.session_state:
     st.session_state["done_init"] = True
