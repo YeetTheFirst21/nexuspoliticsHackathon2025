@@ -36,14 +36,15 @@ def load_shapefiles():
 bund, land, gemeinde = load_shapefiles()
 
 # Get layer dynamically
-def get_admin_layers(current_zoom):
+def get_admin_regions_layer(current_zoom):
     return [
         pydeck.Layer(
             "GeoJsonLayer",
             data=bund,
             id="bundeslaender",
             get_fill_color=[0, 0, 255, 80],
-            pickable=False,
+            pickable=True,
+            auto_highlight=True,
             visible=current_zoom < 8
         ),
         pydeck.Layer(
@@ -51,7 +52,8 @@ def get_admin_layers(current_zoom):
             data=land,
             id="landkreise",
             get_fill_color=[0, 255, 0, 80],
-            pickable=False,
+            pickable=True,
+            auto_highlight=True,
             visible=8 <= current_zoom < 12
         ),
         pydeck.Layer(
@@ -59,11 +61,37 @@ def get_admin_layers(current_zoom):
             data=gemeinde,
             id="gemeinde",
             get_fill_color=[255, 0, 0, 80],
-            pickable=False,
+            pickable=True,
+            auto_highlight=True,
             visible=current_zoom >= 12
         )
     ]
 
+def get_points_layer():
+    return pydeck.Layer(
+            "ScatterplotLayer",
+            data=cities,
+            id="cities",
+            get_position=["Longitude", "Latitude"],
+            get_color="[75, 75, 255]",
+            pickable=True,
+            auto_highlight=True,
+            get_radius="size",
+        )
+
+def update_layers(zoom_level):
+    return [
+        get_admin_regions_layer(zoom_level),
+        get_points_layer()
+    ]
+
+
+def get_updated_deck(view_state, zoom_level):
+    return pydeck.Deck(
+                update_layers(zoom_level),
+                initial_view_state = view_state,
+                tooltip={"text": "{GEN}"},
+            )
 
 cities = {
         "Garching bei München": {"latitude": 48.2496, "longitude": 11.6584},
@@ -80,8 +108,6 @@ cities["size"] = 5000
 #st.write(cities)
 
 def main():
-
-
 
     st.markdown("<h1 style='text-align: center;'>Politics Heatmap of Germany @ nexus Politics Hackathon 2025</h1>", unsafe_allow_html=True)
 
@@ -100,50 +126,12 @@ def main():
     """, unsafe_allow_html=True)
 
 
-
-
     view_state = pydeck.ViewState(
         latitude=48.1351, longitude=11.5820, zoom=6.5, min_zoom=5, max_zoom=15
     )
 
-    # Initial zoom
-    current_zoom = view_state.zoom
-
-    # Get map return data to track zoom
-    chart2 = None
-    map_return = None
-
-    # Build layers based on zoom
-    admin_layers = get_admin_layers(current_zoom)
-    point_layer2 = pydeck.Layer(
-        "ScatterplotLayer",
-        data=cities,
-        id="cities",
-        get_position=["Longitude", "Latitude"],
-        get_color="[75, 75, 255]",
-        pickable=True,
-        auto_highlight=True,
-        get_radius="size",
-    )
-    chart2 = pydeck.Deck(
-        layers=[point_layer2] + admin_layers,
-        initial_view_state=view_state,
-        tooltip={"text": "{Capital}\n{Latitude}, {Longitude}"},
-    )
-
-    # If zoom changed, rebuild layers
-    if map_return and "viewState" in map_return:
-        current_zoom = map_return["viewState"]["zoom"]
-        admin_layers = get_admin_layers(current_zoom)
-        chart2 = pydeck.Deck(
-            layers=[point_layer2] + admin_layers,
-            initial_view_state=view_state,
-            tooltip={"text": "{Capital}\n{Latitude}, {Longitude}"},
-        )
-    
     mainMap = st.pydeck_chart(
-        chart2,
-        on_select="rerun",
+        get_updated_deck(view_state, view_state.zoom),
         selection_mode="multi-object",
         height=800,
         key="main_map"
