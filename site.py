@@ -129,14 +129,6 @@ def main():
         tooltip={"text": "{Capital}\n{Latitude}, {Longitude}"},
     )
 
-    map_return = st.pydeck_chart(
-        chart2,
-        on_select="rerun",
-        selection_mode="multi-object",
-        height=800,
-        key="main_map"
-    )
-
     # If zoom changed, rebuild layers
     if map_return and "viewState" in map_return:
         current_zoom = map_return["viewState"]["zoom"]
@@ -146,16 +138,15 @@ def main():
             initial_view_state=view_state,
             tooltip={"text": "{Capital}\n{Latitude}, {Longitude}"},
         )
-        st.pydeck_chart(
-            chart2,
-            on_select="rerun",
-            selection_mode="multi-object",
-            height=800,
-            key="main_map"
-        )
     
-    mainMap = st.pydeck_chart(chart2, on_select="rerun", selection_mode="multi-object",height=800)
-
+    mainMap = st.pydeck_chart(
+        chart2,
+        on_select="rerun",
+        selection_mode="multi-object",
+        height=800,
+        key="main_map"
+    )
+    
     try:
         selectedCities = mainMap.selection["objects"]["cities"]
     except :
